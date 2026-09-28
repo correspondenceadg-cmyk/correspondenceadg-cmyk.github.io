@@ -1,14 +1,732 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Your Store Name Here</title>
+  <link href="https://fonts.googleapis.com/css2?family=Germania+One&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'Blacklottery';
+      src: url('blacklottery.ttf') format('truetype');
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      color: #e0e0e0;
+      font-size: 14px;
+      overflow-x: hidden;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 30% 40%, #0f0c29 0%, #302b63 60%, #24243e 100%);
+      background-attachment: fixed;
+    }
+
+    .moon-container {
+      position: fixed; top: 4%; right: 4%; width: 100px; height: 100px; z-index: 1; pointer-events: none;
+      filter: drop-shadow(0 0 20px rgba(255, 255, 200, 0.2));
+    }
+    .moon-svg { width: 100%; height: 100%; display: block; }
+    .stars-container {
+      position: fixed; top: -50vh; left: 0; width: 100vw; height: 200vh; z-index: 0; pointer-events: none; will-change: transform;
+    }
+    .star {
+      position: absolute; background: white; border-radius: 50%; opacity: 0.6;
+    }
+    .star.twinkle {
+      animation: pulse var(--pulse-duration, 3s) infinite alternate;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.2; transform: scale(1); }
+      100% { opacity: 0.9; transform: scale(1.5); }
+    }
+    .star.rotate {
+      background: transparent; width: 0; height: 0;
+      border-left: 3px solid transparent; border-right: 3px solid transparent;
+      border-bottom: 6px solid white; border-radius: 0;
+      animation: spin 4s linear infinite;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    .star-burst {
+      position: absolute; top: 50%; left: 50%;
+      width: 0; height: 0; pointer-events: none;
+      animation: burstExplode 1.2s ease-out forwards;
+    }
+    .star-burst .layer {
+      position: absolute; top: 50%; left: 50%;
+      width: 0; height: 0; transform: translate(-50%, -50%);
+    }
+    .star-burst .layer:nth-child(1) { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,0 61,39 100,50 61,61 50,100 39,61 0,50 39,39' fill='%23ffffff'/%3E%3C/svg%3E") center/contain no-repeat; animation: burstScale 1.2s ease-out forwards; }
+    .star-burst .layer:nth-child(2) { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,0 61,39 100,50 61,61 50,100 39,61 0,50 39,39' fill='%23aa88ff'/%3E%3C/svg%3E") center/contain no-repeat; transform: translate(-50%, -50%) rotate(45deg) scale(1.4); animation: burstScale 1.2s ease-out forwards; }
+    .star-burst .layer:nth-child(3) { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,0 61,39 100,50 61,61 50,100 39,61 0,50 39,39' fill='%23ffdd55'/%3E%3C/svg%3E") center/contain no-repeat; transform: translate(-50%, -50%) rotate(-30deg) scale(0.8); animation: burstScale 1.2s ease-out forwards; }
+    .star-burst .layer:nth-child(4) { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,0 61,39 100,50 61,61 50,100 39,61 0,50 39,39' fill='%2355aaff'/%3E%3C/svg%3E") center/contain no-repeat; transform: translate(-50%, -50%) rotate(60deg) scale(1.1); animation: burstScale 1.2s ease-out forwards; }
+    @keyframes burstScale {
+      0% { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 1; }
+      40% { transform: translate(-50%, -50%) scale(2.5) rotate(calc(var(--rot, 0) * 1deg)); opacity: 0.9; }
+      100% { transform: translate(-50%, -50%) scale(4) rotate(calc(var(--rot, 0) * 2deg)); opacity: 0; }
+    }
+    @keyframes burstExplode { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+    .comet { position: fixed; pointer-events: none; z-index: 0; }
+    .comet-head { position: absolute; width: 6px; height: 6px; background: white; border-radius: 50%; box-shadow: 0 0 10px 3px rgba(255,255,200,0.8), 0 0 25px 8px rgba(255,255,100,0.3); }
+    .comet-tail { position: absolute; height: 2px; width: 120px; background: linear-gradient(to right, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 40%, transparent 100%); transform-origin: right center; top: 50%; right: 0; transform: translateY(-50%); filter: blur(1px); }
+    .comet-glow { position: absolute; width: 40px; height: 40px; background: radial-gradient(circle, rgba(255,255,200,0.3) 0%, transparent 70%); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .comet-anim { animation: cometFly 1.8s cubic-bezier(0.15, 0.9, 0.2, 1) forwards; }
+    @keyframes cometFly {
+      0% { opacity: 1; transform: translate(0, 0) scale(1) rotate(var(--angle)); }
+      100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.3) rotate(var(--angle)); }
+    }
+
+    .demo-marquee {
+      position: absolute; top: 0; left: 0; width: 100%; height: 30px;
+      pointer-events: none; display: flex; align-items: center; overflow: hidden;
+      background: rgba(0,0,0,0.4);
+    }
+    .demo-marquee span {
+      display: inline-block; white-space: nowrap;
+      animation: scrollMarquee 20s linear infinite;
+      color: #ffcc00; font-size: 0.9rem; font-weight: bold;
+      text-shadow: 1px 1px 2px black;
+    }
+    @keyframes scrollMarquee {
+      0% { transform: translateX(100vw); }
+      100% { transform: translateX(-100%); }
+    }
+
+    .top-bar {
+      position: fixed; top: 0; left: 0; width: 100%; height: 90px;
+      background: rgba(12, 10, 29, 0.75); backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08); z-index: 100;
+      display: flex; align-items: flex-end; justify-content: space-between; padding: 0 24px;
+    }
+    .hamburger { width: 44px; height: 44px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; font-size: 26px; color: #eee; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.25s, transform 0.2s; user-select: none; margin-bottom: 6px; }
+    .hamburger:hover { background: rgba(255, 255, 255, 0.15); transform: scale(0.95); }
+    .brand { font-weight: 700; font-size: 1rem; letter-spacing: 1px; color: #fff; background: linear-gradient(135deg, #f7c948, #f2a900); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-align: center; max-width: 55vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cart-icon { position: relative; font-size: 28px; cursor: pointer; line-height: 1; transition: transform 0.2s; user-select: none; margin-bottom: 6px; }
+    .cart-icon:hover { transform: scale(1.1); }
+    .cart-badge {
+      position: absolute; top: -6px; left: 100%; transform: translateX(-50%);
+      background: #e54b2b; color: white; border-radius: 50%;
+      width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; border: 2px solid #fff;
+      transition: transform 0.2s;
+    }
+    .cart-badge.pulse { animation: badgePulse 0.3s ease-out; }
+    @keyframes badgePulse { 0% { transform: scale(1.6); } 100% { transform: scale(1); } }
+
+    .menu-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 98; display: none; }
+    .menu-overlay.show { display: block; }
+    .menu-panel { position: fixed; top: 90px; left: 0; width: 280px; height: calc(100vh - 90px); background: rgba(18, 16, 35, 0.95); backdrop-filter: blur(14px); border-right: 1px solid rgba(255, 255, 255, 0.06); z-index: 99; padding: 32px 24px; display: flex; flex-direction: column; gap: 18px; transform: translateX(-100%); transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+    .menu-panel.open { transform: translateX(0); }
+    .menu-panel a { color: #d4d4e0; text-decoration: none; font-size: 1.1rem; font-weight: 500; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: color 0.2s, padding-left 0.2s; }
+    .menu-panel a:hover { color: #f2a900; padding-left: 8px; }
+
+    .main-content { padding-top: 90px; min-height: 100vh; }
+    .page { display: none; padding: 30px 20px 60px; max-width: 1100px; margin: 0 auto; min-height: calc(100vh - 90px); }
+    .page.active { display: block; }
+
+    .banner-wrapper { text-align: center; margin-bottom: 48px; overflow: hidden; width: 100%; max-width: 100vw; }
+    .banner {
+      display: inline-block;
+      background: rgba(200, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      color: white;
+      font-size: clamp(1.3rem, 4.5vw, 2.5rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      padding: 15px 25px;
+      border-radius: 16px;
+      box-shadow: 0 0 40px rgba(255,0,0,0.4);
+      transform: translateX(100vw) skewX(-10deg);
+      animation: bannerSlide 1.8s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+      will-change: transform;
+      white-space: normal;
+      word-break: break-word;
+    }
+    @keyframes bannerSlide {
+      0% { transform: translateX(100vw) skewX(-10deg); }
+      65% { transform: translateX(0%) skewX(-10deg); }
+      75% { transform: translateX(3%) skewX(-18deg); }
+      85% { transform: translateX(-1%) skewX(-6deg); }
+      92% { transform: translateX(1%) skewX(-14deg); }
+      100% { transform: translateX(0%) skewX(-10deg); }
+    }
+
+    .fly-in { opacity: 0; transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
+    .fly-in.from-left { transform: translateX(-80px); }
+    .fly-in.from-right { transform: translateX(80px); }
+    .fly-in.visible { opacity: 1; transform: translateX(0); }
+
+    @keyframes materialize {
+      0% { opacity: 0; transform: scale(0.8) rotateZ(5deg); filter: blur(10px); }
+      100% { opacity: 1; transform: scale(1) rotateZ(0deg); filter: blur(0); }
+    }
+    .materialize { animation: materialize 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards; opacity: 0; }
+
+    .product-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; padding-bottom: 30px; }
+    .product-card {
+      background: rgba(255, 255, 255, 0.04); backdrop-filter: blur(6px); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 20px; padding: 20px 16px; width: 200px; max-width: 45vw; text-align: center; transition: border-color 0.25s, box-shadow 0.3s;
+      display: flex; justify-content: center; align-items: center; flex-direction: column;
+      transform-style: preserve-3d;
+      position: relative;
+    }
+    .product-card:hover { border-color: rgba(242, 169, 0, 0.4); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+
+    .card-spinner {
+      transform-style: preserve-3d;
+      width: 100%;
+      transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .card-spinner.spin-y { transform: rotateY(360deg); }
+    .card-spinner.spin-y-rev { transform: rotateY(-360deg); }
+    .card-spinner.spin-x { transform: rotateX(360deg); }
+    .card-spinner.spin-x-rev { transform: rotateX(-360deg); }
+
+    .product-img { width: 100%; height: 110px; background: rgba(255,255,255,0.04); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: #8888aa; margin-bottom: 12px; border: 1px dashed rgba(255,255,255,0.08); }
+    .product-name { font-weight: 600; font-size: 1.05rem; margin: 4px 0; color: #f0e6d0; }
+    .product-price { font-size: 1.25rem; color: #f7c948; font-weight: 700; }
+    .add-to-cart-btn { margin-top: 12px; padding: 8px 20px; background: linear-gradient(135deg, #f2a900, #e68a00); border: none; border-radius: 40px; color: #1a1a2e; font-weight: 700; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 14px rgba(242, 169, 0, 0.15); }
+
+    .product-card.scratch-card { padding: 0; overflow: hidden; }
+
+    .scribble-wrapper {
+      position: relative;
+      display: block;
+      width: 100%;
+      height: 100%;
+      margin: 0 auto;
+      overflow: hidden;
+      cursor: pointer;
+      border-radius: 20px;
+      padding: 0;
+    }
+    .blue-cover {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .blue-cover svg {
+      width: 100%; height: 100%;
+      display: block;
+    }
+    .blue-cover .scratch-line {
+      fill: none;
+      stroke: black;
+      stroke-width: 170;
+      stroke-dasharray: 20000;
+      stroke-dashoffset: 20000;
+    }
+    .scribble-wrapper .scribble-content {
+      position: relative;
+      z-index: 1;
+      border-radius: 20px;
+      padding: 20px 16px;
+      background: rgba(255,255,255,0.04);
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+    }
+
+    .contact-wrapper { background: #2d3234; padding: 20px; border-radius: 16px; display: flex; align-items: center; justify-content: center; min-height: 30vh; max-width: 600px; margin: 0 auto; }
+    .contact-wrapper p { max-width: 300px; word-break: break-all; }
+    .main-item { display: inline-block; margin: 0 15px; overflow: hidden; float: left; padding: 0 0 30px; }
+    .contact-spacer { margin-top: 3em; }
+
+    .confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: hidden; }
+    .confetti-piece {
+      position: absolute; width: 10px; height: 10px; top: -10px; opacity: 0;
+      animation: confettiFall 3s linear forwards;
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+
+    .cart-item { background: rgba(255,255,255,0.04); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.06); padding: 12px 16px; margin-bottom: 10px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .remove-item { background: transparent; border: 1px solid #e54b2b; color: #e54b2b; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-weight: 600; transition: background 0.2s, color 0.2s; }
+    .remove-item:hover { background: #e54b2b; color: #fff; }
+    .cart-summary { background: rgba(255,255,255,0.04); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.06); padding: 24px; border-radius: 24px; margin-top: 24px; }
+    .promo-input { padding: 10px 16px; width: 200px; border-radius: 40px; border: 1px solid rgba(255, 215, 0, 0.3); background: rgba(0,0,0,0.3); color: #eee; outline: none; transition: border-color 0.2s; }
+    .promo-input:focus { border-color: #f2a900; }
+    .checkout-wrapper { position: relative; display: inline-block; margin-top: 16px; overflow: hidden; border-radius: 40px; }
+    .checkout-cover { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; border-radius: 40px; z-index: 2; pointer-events: none; transition: all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); opacity: 1; transform: scale(1) rotate(0deg); filter: blur(0px); }
+    .checkout-cover.melted { opacity: 0; transform: scale(0.8) rotate(5deg); filter: blur(8px); pointer-events: none; }
+    .checkout-cover span { color: #aaa; font-size: 0.9rem; font-weight: 600; }
+    .checkout-btn { padding: 12px 32px; background: linear-gradient(135deg, #f2a900, #e68a00); border: none; border-radius: 40px; color: #1a1a2e; font-weight: 700; font-size: 1.05rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 14px rgba(242, 169, 0, 0.15); z-index: 1; }
+
+    .login-box { background: rgba(255,255,255,0.04); backdrop-filter: blur(6px); padding: 32px; border-radius: 24px; max-width: 400px; margin: 30px auto; text-align: center; border: 1px solid rgba(255,255,255,0.06); }
+    .login-box input { width: 80%; padding: 12px 16px; margin: 10px 0; border: 1px solid rgba(255, 215, 0, 0.2); background: rgba(0,0,0,0.3); color: #eee; border-radius: 40px; outline: none; transition: border-color 0.2s; }
+    .login-box input:focus { border-color: #f2a900; }
+    .login-box button { padding: 12px 32px; background: linear-gradient(135deg, #f2a900, #e68a00); border: none; border-radius: 40px; color: #1a1a2e; font-weight: 700; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 14px rgba(242, 169, 0, 0.15); }
+
+    .demo-footer {
+      position: fixed; bottom: 0; left: 0; width: 100%;
+      background: rgba(255,0,0,0.8); color: white;
+      text-align: center; padding: 5px; font-size: 0.9rem; z-index: 10;
+    }
+    .footer { text-align: center; padding: 24px 20px; color: #666688; font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.04); margin-top: 40px; }
+
+    @media (max-width: 480px) {
+      .product-card { width: 140px; padding: 14px; }
+      .product-card.scratch-card { padding: 0; }
+      .top-bar { padding: 0 16px; }
+      .menu-panel { width: 240px; }
+    }
+  </style>
 </head>
-
 <body>
-  
-</body>
+  <div class="moon-container"><svg class="moon-svg" viewBox="0 0 100 100"><path d="M 50 15 A 40 40 0 0 1 50 85 A 30 30 0 0 0 50 15 Z" fill="#FFFED4" /></svg></div>
+  <div class="stars-container" id="stars-container"></div>
 
+  <header class="top-bar">
+    <div class="demo-marquee">
+      <span>THIS WEBSITE IS FOR DEMONSTRATION PURPOSES ONLY. IF YOU WANT IT TO ACTUALLY WORK, YOU ARE GOING TO HAVE TO PAY</span>
+    </div>
+    <div class="hamburger" id="hamburger-btn">☰</div>
+    <span class="brand">Your Store Name Here</span>
+    <div class="cart-icon" id="cart-icon">🛒<span class="cart-badge" id="cart-badge" style="display:none;">0</span></div>
+  </header>
+
+  <div class="menu-overlay" id="menu-overlay"></div>
+  <nav class="menu-panel" id="menu-panel">
+    <a href="#" data-page="home">Home</a>
+    <a href="#" data-page="cart">Cart</a>
+    <a href="#" data-page="ordering">Ordering Info</a>
+    <a href="#" data-page="trackorder">Track Order</a>
+    <a href="#" data-page="contact">Contact</a>
+    <a href="#" data-page="login">Login</a>
+  </nav>
+
+  <main class="main-content">
+    <section class="page active" id="page-home">
+      <div class="banner-wrapper">
+        <div class="banner">Your Store Name Here</div>
+      </div>
+
+      <div class="fly-in from-left" style="text-align:center; margin:40px 0;">
+        <h2>Midnight Collection</h2>
+        <p style="font-size:1.2rem;">Curated digital assets for the discerning collector.</p>
+      </div>
+
+      <div class="product-grid" id="product-grid"></div>
+    </section>
+
+    <section class="page" id="page-cart">
+      <h2>🛒 Your Cart</h2>
+      <div id="cart-items-container"></div>
+      <div class="cart-summary" id="cart-summary" style="display:none;">
+        <p>Subtotal: $<span id="subtotal" class="price-scramble">0.00</span></p>
+        <p>Shipping: $<span class="price-scramble">20.00</span></p>
+        <p>Service fee: $<span class="price-scramble">80.00</span></p>
+        <p><input type="text" id="promo-code" class="promo-input" placeholder="Promo code"></p>
+        <p><strong>Total: $<span id="total" class="price-scramble">0.00</span></strong></p>
+        <div class="checkout-wrapper" id="checkout-wrapper">
+          <div class="checkout-cover" id="checkout-cover"><span>🔒 Scroll to reveal</span></div>
+          <button class="checkout-btn" id="checkout-btn">Proceed to Checkout</button>
+        </div>
+      </div>
+      <div id="empty-cart-msg">Your cart is empty.</div>
+    </section>
+
+    <section class="page" id="page-oopsie"><h2>OOPSIE WOOPSIE</h2><div class="oops-text" id="oops-content"></div></section>
+
+    <section class="page" id="page-ordering">
+      <h2 class="fly-in from-left">📦 Ordering Information</h2>
+    </section>
+    
+    <section class="page" id="page-trackorder">
+      <h2 class="fly-in from-left">🔍 Track Your Order</h2>
+      <div class="login-box" style="max-width:400px; margin:20px auto;">
+        <label for="order-number">Order Number</label>
+        <input type="text" id="order-number" placeholder="e.g. ORD-12345" disabled />
+        <br><br><button id="track-btn" disabled>Track</button>
+        <div id="order-result" style="margin-top:16px; color:#aaa;"></div>
+      </div>
+    </section>
+
+    <section class="page" id="page-contact">
+      <h2 class="fly-in from-left">📧 Contact Info</h2>
+      <div class="contact-wrapper">
+        <div class="main-item">
+          <p class="text-scramble">Email</p>
+          <p class="text-scramble" style="font-size:0.8rem; word-break:break-all;">correspondenceadg@gmail.com</p>
+          <p class="text-scramble contact-spacer">Phone</p>
+          <p class="text-scramble" style="font-size:0.8rem; word-break:break-all;">321-364-5233</p>
+          <p class="text-scramble contact-spacer">MONERO</p>
+          <p style="font-size:0.8rem; word-break:break-all;">89xESkz9XfQgZZtkSHqu4HUX4pNQ3CFNRhp3yMJKXg3PapNM4rnDUCZPXm4aN8yYLQemgE4g7ZPeYNw6VSzZ3pQDE2sM2Jn</p>
+          <p class="text-scramble contact-spacer">BTC</p>
+          <p style="font-size:0.8rem; word-break:break-all;">bc1q2dpflye0tlq9lz2y5n3r46a64t42u65u9pr0n2</p>
+          <p class="text-scramble contact-spacer">Session</p>
+          <p style="font-size:0.8rem; word-break:break-all;">059466ac2f59d72a0e33971f110527e5ff42d8b0ce06aa93f49f3ff1b1966e6a35</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" id="page-login">
+      <h2 class="fly-in from-left">🔐 Login</h2>
+      <div class="login-box">
+        <input type="text" id="username" placeholder="Username"><br>
+        <input type="password" id="password" placeholder="Password"><br>
+        <button id="login-btn">Log In</button>
+        <p id="login-message" style="margin-top:16px;"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">© 2026 — All rights reserved.</footer>
+  <div class="demo-footer">THIS WEBSITE IS A DEMO. FOR ALL FEATURES, PLEASE PAY THE WEBDESIGNER.</div>
+
+  <script>
+    (function() {
+      const products = [
+        { name: "Product 1", price: 9.99, img: "https://via.placeholder.com/200x200/2d3234/ffffff?text=Product+1" },
+        { name: "Service 2", price: 19.98, img: "https://via.placeholder.com/200x200/2d3234/ffffff?text=Service+2" },
+        { name: "Commodity 3", price: 29.97, img: "https://via.placeholder.com/200x200/2d3234/ffffff?text=Commodity+3" },
+        { name: "Item 4", price: 39.96, img: "https://via.placeholder.com/200x200/2d3234/ffffff?text=Item+4" },
+        { name: "Bauble 5", price: 49.95, img: "https://via.placeholder.com/200x200/2d3234/ffffff?text=Bauble+5" },
+        { name: "Merchandise 6", price: 59.94, img: "https://via.placeholder.com/200x200/2d3234/ffffff?text=Merchandise+6" },
+        { name: "Trinket 7", price: 69.93, img: "https://via.placeholder.com/200x200/2d3234/ffffff?text=Trinket+7" },
+        { name: "Tchotchkes 8", price: 79.92, img: "https://via.placeholder.com/200x200/2d3234/ffffff?text=Tchotchkes+8" },
+        { name: "Souvenir 9", price: 89.91, img: "https://via.placeholder.com/200x200/2d3234/ffffff?text=Souvenir+9" },
+        { name: "Curio 10", price: 210.00, img: "https://via.placeholder.com/200x200/2d3234/ffffff?text=Curio+10", desc: "$80 security deposit + $10 domain + $120 job" }
+      ];
+      let cart = [];
+
+      const pages = { home: document.getElementById('page-home'), cart: document.getElementById('page-cart'), oopsie: document.getElementById('page-oopsie'), ordering: document.getElementById('page-ordering'), trackorder: document.getElementById('page-trackorder'), contact: document.getElementById('page-contact'), login: document.getElementById('page-login') };
+      function switchPage(id) { Object.values(pages).forEach(p => p.classList.remove('active')); if (pages[id]) pages[id].classList.add('active'); closeMenu(); if (id === 'cart') renderCart(); }
+      document.querySelectorAll('.menu-panel a').forEach(link => { link.addEventListener('click', e => { e.preventDefault(); switchPage(link.dataset.page); }); });
+
+      const hamburger = document.getElementById('hamburger-btn'), menuPanel = document.getElementById('menu-panel'), menuOverlay = document.getElementById('menu-overlay');
+      function closeMenu() { menuPanel.classList.remove('open'); menuOverlay.classList.remove('show'); }
+      function openMenu() { menuPanel.classList.add('open'); menuOverlay.classList.add('show'); }
+      hamburger.addEventListener('click', () => menuPanel.classList.contains('open') ? closeMenu() : openMenu());
+      menuOverlay.addEventListener('click', closeMenu);
+
+      const cartIcon = document.getElementById('cart-icon'), cartBadge = document.getElementById('cart-badge');
+      cartIcon.addEventListener('click', () => switchPage('cart'));
+      function updateBadge() {
+        const count = cart.reduce((s, i) => s + i.qty, 0);
+        cartBadge.textContent = count;
+        if (count > 0) { cartBadge.style.display = 'flex'; cartBadge.classList.add('pulse'); setTimeout(() => cartBadge.classList.remove('pulse'), 300); } else { cartBadge.style.display = 'none'; }
+      }
+
+      const spinClasses = ['spin-y', 'spin-x', 'spin-y-rev', 'spin-x-rev', 'spin-y', 'spin-x', 'spin-y-rev', 'spin-x-rev', 'spin-y'];
+
+      document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('add-to-cart-btn')) {
+          const idx = parseInt(e.target.dataset.index);
+          if (idx >= 9) return;
+          const card = e.target.closest('.product-card');
+          const spinnerInner = card.querySelector('.card-spinner');
+          if (spinnerInner) {
+            spinnerInner.classList.remove('spin-y', 'spin-y-rev', 'spin-x', 'spin-x-rev');
+            void spinnerInner.offsetWidth;
+            spinnerInner.classList.add(spinClasses[idx]);
+            setTimeout(() => spinnerInner.classList.remove(spinClasses[idx]), 1200);
+          }
+        }
+      });
+
+      const grid = document.getElementById('product-grid');
+      for (let i = 0; i < 9; i++) {
+        const p = products[i];
+        const card = document.createElement('div');
+        const dir = i % 2 === 0 ? 'from-left' : 'from-right';
+        card.className = `product-card fly-in ${dir} materialize`;
+        card.style.animationDelay = (i * 0.1) + 's';
+        card.innerHTML = `
+          <div class="card-spinner">
+            <div class="product-img"><img src="${p.img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"></div>
+            <div class="product-name">${p.name}</div>
+            <div class="product-price">$${p.price.toFixed(2)}</div>
+            <button class="add-to-cart-btn" data-index="${i}">Add to Cart</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      }
+
+      const lastProduct = products[9];
+      const lastCardWrapper = document.createElement('div');
+      lastCardWrapper.className = 'product-card scratch-card fly-in from-right';
+      lastCardWrapper.style.width = '275px';
+      lastCardWrapper.style.maxWidth = '60vw';
+      const originalPrice = lastProduct.price;
+      const salePrice = originalPrice * 2;
+      lastCardWrapper.innerHTML = `
+        <div class="scribble-wrapper" id="last-product-scribble">
+          <div class="blue-cover">
+            <svg viewBox="0 0 1500 1062" preserveAspectRatio="none">
+              <defs>
+                <mask id="mask-last">
+                  <rect width="100%" height="100%" fill="white" />
+                  <polyline class="scratch-line" points="0,154 131,0 0,348 269,0 0,562 437,0 0,766 565,14 0,1062 719,0 289,1062 843,0 543,1062 995,0 729,1062 1161,0 947,1062 1307,0 1143,1062 1500,162 1299,1062 1500,830" fill="none" stroke="black" stroke-width="170" stroke-dasharray="20000" stroke-dashoffset="20000" />
+                </mask>
+              </defs>
+              <g mask="url(#mask-last)">
+                <rect width="100%" height="100%" fill="#121212" />
+                <g transform="translate(750, 531)">
+                  <circle cx="0" cy="0" r="250" fill="#ffcc00" stroke="#1c1c1c" stroke-width="18" />
+                  <ellipse cx="-85" cy="-60" rx="38" ry="58" fill="#1c1c1c" />
+                  <ellipse cx="85" cy="-60" rx="38" ry="58" fill="#1c1c1c" />
+                  <path d="M -140,70 Q 0,190 140,70" fill="none" stroke="#1c1c1c" stroke-width="24" stroke-linecap="round" />
+                </g>
+                <g transform="translate(750, 531) rotate(-35)" opacity="0.9">
+                  <text x="0" y="0" font-family="'Blacklottery', 'Germania One', cursive" font-size="273" font-weight="800" text-anchor="middle" dominant-baseline="middle" fill="#0050B5" stroke-linejoin="round">Lucky Scratch</text>
+                </g>
+              </g>
+            </svg>
+          </div>
+          <div class="scribble-content">
+            <div class="product-img"><img src="${lastProduct.img}" alt="${lastProduct.name}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"></div>
+            <div class="product-name">${lastProduct.name}</div>
+            <div class="product-price">
+              <span style="text-decoration:line-through; color:#888; margin-right:8px;">$${salePrice.toFixed(2)}</span>
+              $${originalPrice.toFixed(2)}
+            </div>
+            <div style="font-size:0.75rem;color:#8888aa;">${lastProduct.desc || ''}</div>
+            <button class="add-to-cart-btn" data-index="9" style="margin-top:12px;">Add to Cart</button>
+            <div id="sale-badge" style="display:none; margin-top:8px; color:#f7c948; font-weight:bold;">50% OFF!</div>
+          </div>
+        </div>
+      `;
+      grid.appendChild(lastCardWrapper);
+
+      document.querySelectorAll('.scribble-wrapper').forEach(el => {
+        el.addEventListener('click', function() {
+          if (!this.classList.contains('revealed')) {
+            this.classList.add('revealed');
+            const line = this.querySelector('.scratch-line');
+            if (line) {
+              line.style.transition = 'stroke-dashoffset 2.5s cubic-bezier(0.22, 1, 0.36, 1)';
+              line.style.strokeDashoffset = '0';
+            }
+            if (this.id === 'last-product-scribble') {
+              const badge = document.getElementById('sale-badge');
+              setTimeout(() => {
+                if (badge) {
+                  badge.style.display = 'block';
+                  badge.style.animation = 'none';
+                  void badge.offsetWidth;
+                  badge.style.animation = 'pop-out-in 0.5s';
+                }
+                fireConfetti();
+              }, 2500);
+            }
+          }
+        });
+      });
+
+      document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('add-to-cart-btn')) {
+          const idx = e.target.dataset.index;
+          const prod = products[idx];
+          const existing = cart.find(item => item.name === prod.name);
+          if (existing) existing.qty += 1;
+          else cart.push({ name: prod.name, price: prod.price, qty: 1 });
+          updateBadge();
+        }
+      });
+
+      function fireConfetti() {
+        const container = document.createElement('div');
+        container.className = 'confetti-container';
+        document.body.appendChild(container);
+        const colors = ['#f94144', '#f3722c', '#f8961e', '#f9c74f', '#90be6d', '#43aa8b', '#577590', '#ff6b6b', '#ffd93d'];
+        for (let i = 0; i < 120; i++) {
+          const piece = document.createElement('div');
+          piece.className = 'confetti-piece';
+          piece.style.left = Math.random() * 100 + '%';
+          piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+          piece.style.width = (Math.random() * 8 + 4) + 'px';
+          piece.style.height = (Math.random() * 8 + 4) + 'px';
+          piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+          piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+          piece.style.animationDelay = (Math.random() * 1.5) + 's';
+          container.appendChild(piece);
+        }
+        setTimeout(() => container.remove(), 3500);
+      }
+
+      new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { document.getElementById('checkout-cover').classList.add('melted'); } }); }, { threshold: 0.3 }).observe(document.getElementById('checkout-wrapper'));
+
+      class TextScramble {
+        constructor(el) {
+          this.el = el;
+          this.chars = '!<>-_\\/[]{}—=+*^?#________';
+          this.update = this.update.bind(this);
+        }
+        setText(newText) {
+          const oldText = this.el.innerText;
+          const length = Math.max(oldText.length, newText.length);
+          const promise = new Promise((resolve) => this.resolve = resolve);
+          this.queue = [];
+          for (let i = 0; i < length; i++) {
+            const from = oldText[i] || '';
+            const to = newText[i] || '';
+            const start = Math.floor(Math.random() * 40);
+            const end = start + Math.floor(Math.random() * 40);
+            this.queue.push({ from, to, start, end });
+          }
+          cancelAnimationFrame(this.frameRequest);
+          this.frame = 0;
+          this.update();
+          return promise;
+        }
+        update() {
+          let output = '';
+          let complete = 0;
+          for (let i = 0, n = this.queue.length; i < n; i++) {
+            let { from, to, start, end, char } = this.queue[i];
+            if (this.frame >= end) {
+              complete++;
+              output += to;
+            } else if (this.frame >= start) {
+              if (!char || Math.random() < 0.28) {
+                char = this.chars[Math.floor(Math.random() * this.chars.length)];
+                this.queue[i].char = char;
+              }
+              output += `<span class="dud">${char}</span>`;
+            } else {
+              output += from;
+            }
+          }
+          this.el.innerHTML = output;
+          if (complete === this.queue.length) {
+            this.resolve();
+          } else {
+            this.frameRequest = requestAnimationFrame(this.update);
+            this.frame++;
+          }
+        }
+      }
+
+      document.querySelectorAll('.price-scramble, .text-scramble').forEach(el => {
+        const scrambler = new TextScramble(el);
+        const originalText = el.innerText.trim();
+        let done = false;
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting && !done) {
+              scrambler.setText(originalText);
+              done = true;
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.3 });
+        observer.observe(el);
+      });
+
+      function renderCart() {
+        const container = document.getElementById('cart-items-container'), summary = document.getElementById('cart-summary'), emptyMsg = document.getElementById('empty-cart-msg');
+        if (cart.length === 0) { container.innerHTML = ''; summary.style.display = 'none'; emptyMsg.style.display = 'block'; return; }
+        emptyMsg.style.display = 'none';
+        container.innerHTML = cart.map(item => `<div class="cart-item"><span>${item.name} (x${item.qty}) — $${(item.price * item.qty).toFixed(2)}</span><button class="remove-item" data-name="${item.name}">Remove</button></div>`).join('');
+        document.querySelectorAll('.remove-item').forEach(btn => { btn.addEventListener('click', function() { cart = cart.filter(item => item.name !== this.dataset.name); updateBadge(); renderCart(); }); });
+        const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+        const total = subtotal + 20 + 80 - (document.getElementById('promo-code').value.trim() === 'DISCOUNT10' ? subtotal * 0.1 : 0);
+        document.getElementById('subtotal').textContent = subtotal.toFixed(2);
+        document.getElementById('total').textContent = total.toFixed(2);
+        summary.style.display = 'block';
+      }
+      document.getElementById('promo-code')?.addEventListener('input', renderCart);
+
+      document.getElementById('checkout-btn')?.addEventListener('click', function() {
+        const oops = document.getElementById('oops-content');
+        oops.textContent = 'OOPSIE WOOPSIE YOU SHOULD PAY YOUR WEB DESIGNER FOR THIS FEATURE '.repeat(60);
+        switchPage('oopsie');
+      });
+
+      const validUsers = {
+        'wowthisisreallycool': 'password12345',
+        'shoppingisnthard': 'letmein09876',
+        'chemlord': 'wastelandshop',
+        'iwantmoney': 'paytheman666'
+      };
+      document.getElementById('login-btn')?.addEventListener('click', function() {
+        const u = document.getElementById('username').value.trim();
+        const p = document.getElementById('password').value.trim();
+        const msg = document.getElementById('login-message');
+        if (validUsers[u] && validUsers[u] === p) {
+          msg.style.color = 'lightgreen';
+          msg.textContent = 'Login successful! But you still need to pay the web designer for real access.';
+        } else {
+          msg.style.color = '#e54b2b';
+          msg.textContent = 'Invalid credentials. Try again.';
+        }
+      });
+
+      const starsContainer = document.getElementById('stars-container');
+      for (let i = 0; i < 80; i++) {
+        const star = document.createElement('div'); star.className = 'star';
+        star.style.left = Math.random() * 100 + '%'; star.style.top = Math.random() * 100 + '%';
+        const size = Math.random() * 4 + 1; star.style.width = size + 'px'; star.style.height = size + 'px';
+        if (Math.random() < 0.6) { star.classList.add('twinkle'); star.style.setProperty('--pulse-duration', (Math.random() * 3 + 2).toFixed(2) + 's'); }
+        if (Math.random() < 0.1) { star.classList.add('rotate'); star.style.width = '0'; star.style.height = '0'; star.style.borderLeft = '3px solid transparent'; star.style.borderRight = '3px solid transparent'; star.style.borderBottom = '6px solid white'; star.style.animationDelay = Math.random() * 5 + 's'; }
+        starsContainer.appendChild(star);
+      }
+      function createBurst(star) {
+        const burst = document.createElement('div'); burst.className = 'star-burst';
+        for (let i = 0; i < 4; i++) {
+          const layer = document.createElement('div'); layer.className = 'layer';
+          layer.style.setProperty('--rot', (i * 30 + Math.random() * 20).toString());
+          burst.appendChild(layer);
+        }
+        star.appendChild(burst); setTimeout(() => burst.remove(), 1300);
+      }
+      function randomShine() {
+        const eligible = document.querySelectorAll('.star.twinkle:not(.rotate)');
+        if (eligible.length === 0) return;
+        const star = eligible[Math.floor(Math.random() * eligible.length)];
+        if (!star.querySelector('.star-burst')) createBurst(star);
+      }
+      function scheduleNextShine() { setTimeout(() => { randomShine(); scheduleNextShine(); }, Math.random() * 6000 + 4000); }
+      setTimeout(scheduleNextShine, 2000);
+
+      function createComet() {
+        const comet = document.createElement('div'); comet.className = 'comet';
+        const centerX = window.innerWidth / 2, centerY = window.innerHeight / 2;
+        const angle = Math.random() * 2 * Math.PI, radius = Math.random() * 400;
+        const startX = centerX + radius * Math.cos(angle), startY = centerY + radius * Math.sin(angle);
+        const dirAngle = Math.random() * 2 * Math.PI, distance = 600 + Math.random() * 400;
+        const endX = startX + distance * Math.cos(dirAngle), endY = startY + distance * Math.sin(dirAngle);
+        const dx = endX - startX, dy = endY - startY, angleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
+        comet.style.left = startX + 'px'; comet.style.top = startY + 'px';
+        comet.style.setProperty('--tx', (endX - startX) + 'px'); comet.style.setProperty('--ty', (endY - startY) + 'px'); comet.style.setProperty('--angle', angleDeg + 'deg');
+        comet.innerHTML = `<div class="comet-head"></div><div class="comet-tail"></div><div class="comet-glow"></div>`;
+        comet.classList.add('comet-anim');
+        document.body.appendChild(comet); setTimeout(() => comet.remove(), 3000);
+      }
+      function scheduleComet() { setTimeout(() => { createComet(); scheduleComet(); }, Math.random() * 8000 + 4000); }
+      setTimeout(scheduleComet, 3000);
+
+      window.addEventListener('scroll', () => { document.getElementById('stars-container').style.transform = `translateY(${-window.scrollY * 0.2}px)`; }, { passive: true });
+      
+      setTimeout(() => {
+        const flyElements = document.querySelectorAll('.fly-in');
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+            }
+          });
+        }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+        flyElements.forEach(el => observer.observe(el));
+        flyElements.forEach(el => {
+          const rect = el.getBoundingClientRect();
+          if (rect.top < window.innerHeight && rect.bottom > 0) {
+            el.classList.add('visible');
+          }
+        });
+      }, 500);
+    })();
+  </script>
+</body>
 </html>
