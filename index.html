@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Your Store Name Here</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Courier New', monospace;
+      color: white;
+      overflow-x: hidden;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at center, #0f0c29 0%, #302b63 60%, #24243e 100%);
+      background-attachment: fixed;
+    }
+
+    /* Moon container */
+    .moon-container {
+      position: fixed;
+      top: 5%;
+      right: 5%;
+      width: 120px;
+      height: 120px;
+      z-index: 1;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .moon-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Stars container – parallax layer */
+    .stars-container {
+      position: fixed;
+      top: -50vh;
+      left: 0;
+      width: 100vw;
+      height: 200vh;
+      z-index: 0;
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      opacity: 0.6;
+    }
+
+    .star.twinkle {
+      animation: pulse var(--pulse-duration, 3s) infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.3; transform: scale(1); }
+      100% { opacity: 1; transform: scale(1.6); }
+    }
+
+    .star.rotate {
+      background: transparent;
+      width: 0;
+      height: 0;
+      border-left: 3px solid transparent;
+      border-right: 3px solid transparent;
+      border-bottom: 6px solid white;
+      border-radius: 0;
+      animation: spin 5s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Sparkle burst (child element) */
+    .star-burst {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,0 61,39 100,50 61,61 50,100 39,61 0,50 39,39' fill='white' stroke='white' stroke-width='6' stroke-linejoin='round'/%3E%3Ccircle cx='50' cy='50' r='5' fill='white'/%3E%3C/svg%3E") center/contain no-repeat;
+      transform: translate(-50%, -50%) scale(0);
+      pointer-events: none;
+      animation: sparkleBurst 1.2s ease-out forwards;
+      transform-origin: center;
+    }
+
+    @keyframes sparkleBurst {
+      0% {
+        transform: translate(-50%, -50%) scale(0) rotate(0deg);
+        opacity: 1;
+      }
+      35% {
+        transform: translate(-50%, -50%) scale(2.5) rotate(calc(var(--burst-rotation, 0) * 360deg * 0.35));
+        opacity: 0.9;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(5) rotate(calc(var(--burst-rotation, 0) * 360deg));
+        opacity: 0;
+      }
+    }
+
+    /* Top bar */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 20px;
+      border-bottom: 1px solid #444;
+    }
+
+    .hamburger {
+      width: 48px;
+      height: 48px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 28px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.3s;
+      user-select: none;
+    }
+
+    .hamburger:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .menu-panel {
+      position: fixed;
+      top: 60px;
+      right: 0;
+      width: 80vw;
+      max-width: 300px;
+      height: calc(100vh - 60px);
+      background: rgba(20, 20, 20, 0.95);
+      backdrop-filter: blur(10px);
+      border-left: 2px solid #ff5500;
+      z-index: 99;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+    }
+
+    .menu-panel.open {
+      transform: translateX(0);
+    }
+
+    .menu-panel a {
+      color: white;
+      text-decoration: none;
+      font-size: 1.3rem;
+      font-weight: bold;
+      border-bottom: 1px solid #444;
+      padding-bottom: 8px;
+    }
+
+    .menu-panel a:hover {
+      color: #ffaa00;
+    }
+
+    .menu-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.5);
+      z-index: 98;
+      display: none;
+    }
+
+    .menu-overlay.show {
+      display: block;
+    }
+
+    /* Main content */
+    .main-content {
+      position: relative;
+      z-index: 2;
+      padding-top: 80px;
+      min-height: 100vh;
+    }
+
+    .page {
+      display: none;
+      padding: 20px;
+      margin: 0 auto;
+      max-width: 1000px;
+      min-height: calc(100vh - 80px);
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .banner-container {
+      text-align: center;
+      margin: 0 auto 30px;
+    }
+
+    .banner {
+      display: inline-block;
+      background: rgba(200, 0, 0, 0.8);
+      color: white;
+      font-size: clamp(1.3rem, 4.5vw, 2.5rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      padding: 15px 25px;
+      border-radius: 6px;
+      max-width: 90vw;
+      white-space: normal;
+      word-break: break-word;
+      box-shadow: 0 0 20px rgba(255,0,0,0.6);
+      transform: translateX(100vw) skewX(-12deg);
+      animation: bannerSlide 2s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+    }
+
+    @keyframes bannerSlide {
+      0%   { transform: translateX(100vw) skewX(-12deg); }
+      65%  { transform: translateX(0%) skewX(-12deg); }
+      75%  { transform: translateX(3%) skewX(-18deg); }
+      85%  { transform: translateX(-1%) skewX(-6deg); }
+      92%  { transform: translateX(1%) skewX(-14deg); }
+      100% { transform: translateX(0%) skewX(-12deg); }
+    }
+
+    .product-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      padding-bottom: 50px;
+    }
+
+    .product-card {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(5px);
+      border: 2px solid #ff7700;
+      border-radius: 12px;
+      padding: 15px;
+      width: 180px;
+      max-width: 45vw;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+
+    .product-card:hover {
+      transform: scale(1.05);
+      border-color: #ffaa00;
+    }
+
+    .product-img {
+      width: 100%;
+      height: 110px;
+      background: #333;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: #aaa;
+      margin-bottom: 10px;
+      border: 1px dashed #888;
+    }
+
+    .product-name {
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin: 5px 0;
+      color: #ffcc80;
+    }
+
+    .product-price {
+      font-size: 1.3rem;
+      color: #ffaa00;
+      font-weight: bold;
+    }
+
+    .page h2 {
+      font-size: clamp(1.8rem, 5vw, 2.5rem);
+      margin-bottom: 20px;
+      text-align: center;
+      color: #ffaa00;
+      text-shadow: 2px 2px 5px black;
+    }
+
+    .placeholder-text {
+      background: rgba(0,0,0,0.5);
+      padding: 25px;
+      border-radius: 12px;
+      margin: 20px 0;
+      font-size: 1.1rem;
+      color: white;
+    }
+
+    .order-box {
+      background: rgba(0,0,0,0.7);
+      padding: 30px;
+      border-radius: 16px;
+      max-width: 90vw;
+      width: 400px;
+      margin: 30px auto;
+      text-align: center;
+    }
+
+    .order-box label {
+      font-size: 1.3rem;
+      display: block;
+      margin-bottom: 15px;
+      color: #ffb347;
+    }
+
+    .order-box input {
+      width: 80%;
+      padding: 12px 15px;
+      font-size: 1rem;
+      border: 3px solid #ffaa00;
+      background: #222;
+      color: white;
+      border-radius: 8px;
+      outline: none;
+      font-weight: bold;
+    }
+
+    .order-box button {
+      margin-top: 20px;
+      padding: 12px 30px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      background: #ff5500;
+      border: none;
+      border-radius: 30px;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .order-box button:hover {
+      background: #ff3300;
+    }
+
+    .order-result {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      color: #ffcc80;
+    }
+  </style>
+</head>
+<body>
+  <!-- Moon – right‑lit crescent 🌙 -->
+  <div class="moon-container">
+    <svg class="moon-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 50 15 A 40 40 0 0 1 50 85 A 30 30 0 0 0 50 15 Z" fill="#FFFED4" />
+    </svg>
+  </div>
+
+  <!-- Stars parallax layer -->
+  <div class="stars-container" id="stars-container"></div>
+
+  <!-- Top bar -->
+  <div class="top-bar">
+    <div class="hamburger" id="hamburger-btn">☰</div>
+  </div>
+
+  <!-- Menu -->
+  <div class="menu-overlay" id="menu-overlay"></div>
+  <div class="menu-panel" id="menu-panel">
+    <a href="#" data-page="home">Home</a>
+    <a href="#" data-page="cart">Cart</a>
+    <a href="#" data-page="ordering">Ordering Info</a>
+    <a href="#" data-page="account">My Account</a>
+    <a href="#" data-page="contact">Contact Info</a>
+  </div>
+
+  <!-- Main content -->
+  <div class="main-content">
+    <div class="page active" id="page-home">
+      <div class="banner-container">
+        <div class="banner">Your Store Name Here</div>
+      </div>
+      <div class="product-grid" id="product-grid"></div>
+    </div>
+    <div class="page" id="page-cart">
+      <h2>🛒 Your Cart</h2>
+      <div class="placeholder-text"><p>Your cart is currently empty. Stroll the wasteland and grab some loot!</p></div>
+    </div>
+    <div class="page" id="page-ordering">
+      <h2>📦 Ordering Information</h2>
+      <div class="placeholder-text"><p>[Your ordering info text will go here.]</p></div>
+    </div>
+    <div class="page" id="page-account">
+      <h2>🔍 Track Your Order</h2>
+      <div class="order-box">
+        <label for="order-number">Order Number</label>
+        <input type="text" id="order-number" placeholder="e.g. WST-12345" />
+        <br>
+        <button id="track-btn">Submit</button>
+        <div class="order-result" id="order-result"></div>
+      </div>
+    </div>
+    <div class="page" id="page-contact">
+      <h2>📧 Contact Info</h2>
+      <div class="placeholder-text"><p>[Your contact information will be placed here.]</p></div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // Page switching
+      const pages = {
+        home: document.getElementById('page-home'),
+        cart: document.getElementById('page-cart'),
+        ordering: document.getElementById('page-ordering'),
+        account: document.getElementById('page-account'),
+        contact: document.getElementById('page-contact')
+      };
+
+      function switchPage(pageId) {
+        Object.values(pages).forEach(p => p.classList.remove('active'));
+        if (pages[pageId]) pages[pageId].classList.add('active');
+        closeMenu();
+      }
+
+      document.querySelectorAll('.menu-panel a').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          switchPage(this.getAttribute('data-page'));
+        });
+      });
+
+      const hamburger = document.getElementById('hamburger-btn');
+      const menuPanel = document.getElementById('menu-panel');
+      const menuOverlay = document.getElementById('menu-overlay');
+
+      function closeMenu() {
+        menuPanel.classList.remove('open');
+        menuOverlay.classList.remove('show');
+      }
+      function openMenu() {
+        menuPanel.classList.add('open');
+        menuOverlay.classList.add('show');
+      }
+      hamburger.addEventListener('click', () => {
+        menuPanel.classList.contains('open') ? closeMenu() : openMenu();
+      });
+      menuOverlay.addEventListener('click', closeMenu);
+
+      // Products
+      const productNames = [
+        "Product 1",
+        "Service 2",
+        "Commodity 3",
+        "Item 4",
+        "Bauble 5",
+        "Merchandise 6",
+        "Trinket 7",
+        "Tchotchkes 8",
+        "Souvenir 9",
+        "Curio 10"
+      ];
+
+      const productGrid = document.getElementById('product-grid');
+      productNames.forEach((name, index) => {
+        const i = index + 1;
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+          <div class="product-img">[Image ${i}]</div>
+          <div class="product-name">${name}</div>
+          <div class="product-price">$${(i * 9.99).toFixed(2)}</div>
+        `;
+        productGrid.appendChild(card);
+      });
+
+      // Order tracking
+      document.getElementById('track-btn').addEventListener('click', () => {
+        const input = document.getElementById('order-number').value.trim();
+        const result = document.getElementById('order-result');
+        if (!input) {
+          result.textContent = '⚠️ Please enter an order number.';
+          return;
+        }
+        const mock = {
+          'WST-12345': 'Shipped - Arriving soon',
+          'WST-67890': 'Processing',
+          'DEMO-001': 'Delivered'
+        };
+        result.textContent = `📋 Status: ${mock[input.toUpperCase()] || 'Order not found.'}`;
+      });
+
+      // Stars
+      const starsContainer = document.getElementById('stars-container');
+      const starElements = [];
+      const STAR_COUNT = 90;
+
+      for (let i = 0; i < STAR_COUNT; i++) {
+        const star = document.createElement('div');
+        star.classList.add('star');
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        const size = Math.random() * 4 + 1;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+
+        if (Math.random() < 0.7) {
+          star.classList.add('twinkle');
+          star.style.setProperty('--pulse-duration', (Math.random() * 3 + 2).toFixed(2) + 's');
+        }
+        if (Math.random() < 0.12) {
+          star.classList.add('rotate');
+          star.style.width = '0';
+          star.style.height = '0';
+          star.style.borderLeft = '3px solid transparent';
+          star.style.borderRight = '3px solid transparent';
+          star.style.borderBottom = '6px solid white';
+          star.style.animationDelay = Math.random() * 5 + 's';
+        }
+
+        starsContainer.appendChild(star);
+        starElements.push(star);
+      }
+
+      // Sparkle burst using child element (rounded 4‑pointed star)
+      function randomShine() {
+        const eligible = starElements.filter(s => !s.classList.contains('shine-four') && !s.classList.contains('rotate'));
+        if (eligible.length === 0) return;
+        const star = eligible[Math.floor(Math.random() * eligible.length)];
+
+        // Create burst element
+        const burst = document.createElement('div');
+        burst.className = 'star-burst';
+        // Random rotation speed (0.5 – 2 turns over 1.2s)
+        const totalRotations = Math.random() * 1.5 + 0.5;
+        burst.style.setProperty('--burst-rotation', totalRotations);
+        star.appendChild(burst);
+
+        // Prevent multiple bursts on same star
+        star.classList.add('shine-four');
+
+        // Remove after animation
+        setTimeout(() => {
+          burst.remove();
+          star.classList.remove('shine-four');
+        }, 1200);
+      }
+
+      function scheduleNextShine() {
+        const delay = Math.random() * (27000 - 8000) + 8000;
+        setTimeout(() => {
+          randomShine();
+          scheduleNextShine();
+        }, delay);
+      }
+
+      setTimeout(() => {
+        randomShine();
+        scheduleNextShine();
+      }, Math.random() * 3000 + 1000);
+
+      // Parallax (stars move up when scrolling down)
+      function updateParallax() {
+        const scrollY = window.scrollY;
+        starsContainer.style.transform = `translateY(${-scrollY * 0.3}px)`;
+      }
+      window.addEventListener('scroll', updateParallax, { passive: true });
+      updateParallax();
+    })();
+
+    // Basic devtools / right-click blocking (demo only)
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'u')) {
+        e.preventDefault();
+        return false;
+      }
+    });
+  </script>
+</body>
+</html>
