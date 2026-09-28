@@ -1,0 +1,5 @@
+title: Your Store Name Here
+description: A retro-futuristic wasteland/space themed demo storefront.
+exclude:
+  - README.md
+  - .github/
